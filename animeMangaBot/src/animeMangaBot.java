@@ -17,16 +17,20 @@ public class animeMangaBot {
 
 	public static void main(String args[]) {
 
-		String t = System.getenv("MANGAANIME_API_TOKEN");
-		DiscordClient client = DiscordClient.create(t); // Connects to discord API
+		String token = System.getenv("MANGAANIME_API_TOKEN");
+		DiscordClient client = DiscordClient.create(token); // Connects to discord API
 		GatewayDiscordClient gateway = client.login().block(); // Handles receiving messages, users joining server,
 																// executing actions defined in code
+		List<animeManga> myList = new ArrayList<>();
 
 		gateway.on(MessageCreateEvent.class).flatMap(event -> {
 
 			String userInput = event.getMessage().getContent();
-			if (userInput.equals("!hello"))
-				return event.getMessage().getChannel().flatMap(channel -> channel.createMessage("Hello, Discord!"));
+
+			if (userInput.startsWith("!add")) {
+				String[] input = userInput.split("\\s+", 3);
+				myList.add(new animeManga(Integer.parseInt(input[1]), input[2]));
+			}
 
 			return Mono.empty();
 		}).subscribe();
