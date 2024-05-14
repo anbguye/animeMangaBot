@@ -30,8 +30,8 @@ public class animeMangaBot {
 			if (userInput.startsWith("!add")) {
 				String[] input = userInput.split("\\s+", 3);
 				myList.add(new animeManga(Integer.parseInt(input[1]), input[2]));
-				return event.getMessage().getChannel()
-						.flatMap(channel -> channel.createMessage("Added: " + input[2] + " Chapter " + input[1]));
+				return event.getMessage().getChannel().flatMap(channel -> channel.createMessage(
+						"Added: " + input[2] + " while currently read/watched up to episode/chapter " + input[1]));
 			} else if (userInput.startsWith("!remove")) {
 				String[] input = userInput.split("\\s+", 2);
 				boolean removed = myList.removeIf(val -> val.getAnimeManga().equalsIgnoreCase(input[1]));
@@ -47,8 +47,8 @@ public class animeMangaBot {
 				for (animeManga animanga : myList)
 					if (animanga.getAnimeManga().equals(input[1])) {
 						animanga.addChapter();
-						return event.getMessage().getChannel().flatMap(channel -> channel
-								.createMessage("Currently finished with: " + animanga.getChapter() + " chapters."));
+						return event.getMessage().getChannel().flatMap(channel -> channel.createMessage(
+								"Currently finished with: " + animanga.getChapter() + " chapters/episodes."));
 					}
 
 				return event.getMessage().getChannel()
@@ -61,12 +61,16 @@ public class animeMangaBot {
 					if (animanga.getAnimeManga().equalsIgnoreCase(input[2])) {
 						animanga.setChapter(Integer.parseInt(input[1]));
 						return event.getMessage().getChannel().flatMap(channel -> channel
-								.createMessage("Now currently read up to chapter: " + animanga.getChapter()));
+								.createMessage("Now currently read up to chapter/episode: " + animanga.getChapter()));
 					}
 
 				return event.getMessage().getChannel()
 						.flatMap(channel -> channel.createMessage("Unable to find title."));
-			}
+			} else if (userInput.startsWith("!list"))
+				return event.getMessage().getChannel().flatMap(channel -> channel.createMessage(myList.toString()));
+			else if (userInput.startsWith("!help)"))
+				return event.getMessage().getChannel().flatMap(channel -> channel.createMessage(
+						"!add - Adds new animanga (!add chapter/episode title)\n!remove - Removes animanga (!remove title)\n!read - Adds +1 to chapter counter (!read title)\n!edit - Edits current chapters read (!edit episode/chapter title)\n!list - Lists all current titles (!list)"));
 
 			return Mono.empty();
 		}).subscribe();

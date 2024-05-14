@@ -53,6 +53,6 @@ public class animeManga {
 
 	@Override
 	public String toString() {
-		return animanga;
+		return animanga + " chapter/episode: " + getChapter();
 	}
 }
