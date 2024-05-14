@@ -1,7 +1,9 @@
-
+/**
+ * This class tracks individual anime & manga along with their current chapter
+ */
 
 /**
- * @author Anthony Baoloc Nguyen
+ * @author Anthony Nguyen
  *
  */
 public class animeManga {

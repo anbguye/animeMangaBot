@@ -1,6 +1,6 @@
 
 /**
- * 
+ * The purpose of this bot is to keep track of manga & anime read/watched
  */
 import discord4j.core.DiscordClient; // Import the DiscordClient class from the Discord4J library
 import discord4j.core.GatewayDiscordClient; // Import the GatewayDiscordClient class from the Discord4J library
@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Anthony Baoloc Nguyen
+ * @author Anthony Nguyen
  *
  */
 public class animeMangaBot {
