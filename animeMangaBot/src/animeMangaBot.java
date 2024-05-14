@@ -67,8 +67,9 @@ public class animeMangaBot {
 				return event.getMessage().getChannel()
 						.flatMap(channel -> channel.createMessage("Unable to find title."));
 			} else if (userInput.startsWith("!list"))
-				return event.getMessage().getChannel().flatMap(channel -> channel.createMessage(myList.toString()));
-			else if (userInput.startsWith("!help)"))
+				return event.getMessage().getChannel().flatMap(channel -> channel
+						.createMessage(myList.toString().replaceAll(",", "\n").replace("[", "").replace("]", "")));
+			else if (userInput.startsWith("!help"))
 				return event.getMessage().getChannel().flatMap(channel -> channel.createMessage(
 						"!add - Adds new animanga (!add chapter/episode title)\n!remove - Removes animanga (!remove title)\n!read - Adds +1 to chapter counter (!read title)\n!edit - Edits current chapters read (!edit episode/chapter title)\n!list - Lists all current titles (!list)"));
 
