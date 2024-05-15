@@ -6,27 +6,37 @@
  * @author Anthony Nguyen
  *
  */
-public class animeManga {
+public class animanga {
 
-	String animanga;
-	int chapter;
+	private String animanga;
+	private int chapter;
 
-	public animeManga(int chapter, String animanga) {
+	public animanga() {
 		this.animanga = animanga;
 		this.chapter = chapter;
+	}
+
+	public animanga(String animanga, int chapter) {
+		this.animanga = animanga;
+		this.chapter = chapter;
+	}
+
+	public animanga(String animanga) {
+		this.animanga = animanga;
+		this.chapter = 0;
 	}
 
 	/**
 	 * This method adds another integer to the chapter variable
 	 */
-	public void addChapter() {
+	public void readChapter() {
 		chapter++;
 	}
 
 	/**
 	 * @return the animeManga
 	 */
-	public String getAnimeManga() {
+	public String getAnimanga() {
 		return animanga;
 	}
 
@@ -40,7 +50,7 @@ public class animeManga {
 	/**
 	 * @param animeManga the animeManga to set
 	 */
-	public void setAnimeManga(String animanga) {
+	public void setAnimanga(String animanga) {
 		this.animanga = animanga;
 	}
 
@@ -53,6 +63,6 @@ public class animeManga {
 
 	@Override
 	public String toString() {
-		return animanga + " chapter/episode: " + getChapter();
+		return animanga + " chepisode: " + getChapter();
 	}
 }

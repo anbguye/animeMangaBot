@@ -6,8 +6,10 @@ import discord4j.core.DiscordClient; // Import the DiscordClient class from the 
 import discord4j.core.GatewayDiscordClient; // Import the GatewayDiscordClient class from the Discord4J library
 import discord4j.core.event.domain.message.MessageCreateEvent; // Import the MessageCreateEvent class from the Discord4J library
 import reactor.core.publisher.Mono; // Import the Mono class from the Reactor library
-import java.util.ArrayList;
-import java.util.List;
+
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.HashMap;
 
 /**
  * @author Anthony Nguyen
@@ -21,59 +23,92 @@ public class animeMangaBot {
 		DiscordClient client = DiscordClient.create(token); // Connects to discord API
 		GatewayDiscordClient gateway = client.login().block(); // Handles receiving messages, users joining server,
 																// executing actions defined in code
-		List<animeManga> myList = new ArrayList<>();
+		HashMap<String, animangaList> database = new HashMap<String, animangaList>();
 
 		gateway.on(MessageCreateEvent.class).flatMap(event -> {
 
-			String userInput = event.getMessage().getContent();
-
-			if (userInput.startsWith("!add")) {
-				String[] input = userInput.split("\\s+", 3);
-				myList.add(new animeManga(Integer.parseInt(input[1]), input[2]));
-				return event.getMessage().getChannel().flatMap(channel -> channel.createMessage(
-						"Added: " + input[2] + " while currently read/watched up to episode/chapter " + input[1]));
-			} else if (userInput.startsWith("!remove")) {
+			if (event.getMessage().getAuthor().map(user -> !user.isBot()).orElse(false)) {
+				String userInput = event.getMessage().getContent();
+				String userID = event.getMessage().getAuthor().map(user -> user.getId().asString()).orElse("Unknown");
 				String[] input = userInput.split("\\s+", 2);
-				boolean removed = myList.removeIf(val -> val.getAnimeManga().equalsIgnoreCase(input[1]));
-				if (removed)
+				String[] chaptInput = userInput.split("\\s+", 3);
+
+				if (!database.containsKey(userID))
+					database.put(userID, new animangaList());
+
+				switch (chaptInput[0]) {
+				case "!add":
+					try {
+						if (chaptInput.length == 2 && !database.get(userID).hasTitle(input[1])) { // if input has NO
+																									// EPISODES
+							database.get(userID).add(input[1]);
+							return event.getMessage().getChannel()
+									.flatMap(channel -> channel.createMessage("Added " + input[1] + " to your list."));
+						} else if (chaptInput.length == 3 && !database.get(userID).hasTitle(chaptInput[1])) { // if
+																												// input
+																												// has
+																												// EPISODES
+							database.get(userID).add(chaptInput[1], Integer.parseInt(chaptInput[2]));
+							return event.getMessage().getChannel()
+									.flatMap(channel -> channel.createMessage("Added " + input[1] + " to your list."));
+						}
+						return event.getMessage().getChannel()
+								.flatMap(channel -> channel.createMessage("Title is already on the list."));
+					} catch (NumberFormatException e) {
+						if (!database.get(userID).hasTitle(input[1])) { // if INPUT HAS A LOT OF WORDS IN TITLE
+							database.get(userID).add(input[1]);
+							return event.getMessage().getChannel()
+									.flatMap(channel -> channel.createMessage("Added " + input[1] + " to your list."));
+						}
+						return event.getMessage().getChannel()
+								.flatMap(channel -> channel.createMessage("Title is already on the list."));
+					}
+				case "!read":
+					if (database.get(userID).hasTitle(input[1])) {
+						database.get(userID).readChapter(input[1]);
+						return event.getMessage().getChannel()
+								.flatMap(channel -> channel.createMessage("Now read/watched up to "
+										+ database.get(userID).getChapter(input[1]) + " in " + input[1]));
+					}
 					return event.getMessage().getChannel()
-							.flatMap(channel -> channel.createMessage("Removed: " + input[1]));
-
-				return event.getMessage().getChannel()
-						.flatMap(channel -> channel.createMessage("Unable to find title."));
-			} else if (userInput.startsWith("!read")) {
-				String[] input = userInput.split("\\s+", 2);
-
-				for (animeManga animanga : myList)
-					if (animanga.getAnimeManga().equals(input[1])) {
-						animanga.addChapter();
-						return event.getMessage().getChannel().flatMap(channel -> channel.createMessage(
-								"Currently finished with: " + animanga.getChapter() + " chapters/episodes."));
+							.flatMap(channel -> channel.createMessage("Title is not on the list."));
+				case "!remove":
+					if (database.get(userID).hasTitle(input[1])) {
+						database.get(userID).remove(input[1]);
+						return event.getMessage().getChannel()
+								.flatMap(channel -> channel.createMessage("Removed " + input[1] + " from your list."));
 					}
-
-				return event.getMessage().getChannel()
-						.flatMap(channel -> channel.createMessage("Unable to find title."));
-
-			} else if (userInput.startsWith("!edit")) {
-				String[] input = userInput.split("\\s+", 3);
-
-				for (animeManga animanga : myList)
-					if (animanga.getAnimeManga().equalsIgnoreCase(input[2])) {
-						animanga.setChapter(Integer.parseInt(input[1]));
+					return event.getMessage().getChannel()
+							.flatMap(channel -> channel.createMessage("Title is not on the list."));
+				case "!edit":
+					if (database.get(userID).hasTitle(chaptInput[1])) {
+						database.get(userID).edit(chaptInput[1], Integer.parseInt(chaptInput[2]));
 						return event.getMessage().getChannel().flatMap(channel -> channel
-								.createMessage("Now currently read up to chapter/episode: " + animanga.getChapter()));
+								.createMessage("Now on chepisode " + chaptInput[2] + " in " + chaptInput[1]));
 					}
-
-				return event.getMessage().getChannel()
-						.flatMap(channel -> channel.createMessage("Unable to find title."));
-			} else if (userInput.startsWith("!list"))
-				return event.getMessage().getChannel().flatMap(channel -> channel
-						.createMessage(myList.toString().replaceAll(",", "\n").replace("[", "").replace("]", "")));
-			else if (userInput.startsWith("!help"))
-				return event.getMessage().getChannel().flatMap(channel -> channel.createMessage(
-						"!add - Adds new animanga (!add chapter/episode title)\n!remove - Removes animanga (!remove title)\n!read - Adds +1 to chapter counter (!read title)\n!edit - Edits current chapters read (!edit episode/chapter title)\n!list - Lists all current titles (!list)"));
+					return event.getMessage().getChannel()
+							.flatMap(channel -> channel.createMessage("Title is not on the list."));
+				case "!list":
+					if (!database.get(userID).isEmpty())
+						return event.getMessage().getChannel()
+								.flatMap(channel -> channel.createMessage(database.get(userID).list()));
+					return event.getMessage().getChannel().flatMap(channel -> channel.createMessage("List is empty."));
+				case "!help":
+					return event.getMessage().getChannel()
+							.flatMap(channel -> channel.createMessage("!add - adds animanga to your list\n"
+									+ "!read - adds +1 to your animanga chepisode counter\n"
+									+ "!remove - removes animanga from your list\n"
+									+ "!edit - episodes currnet chepisode read/watched\n" + ""
+									+ "!list - lists your list"));
+				default:
+					if (userInput.startsWith("!"))
+						return event.getMessage().getChannel()
+								.flatMap(channel -> channel.createMessage("Invalid command, please use !help"));
+				}
+			}
 
 			return Mono.empty();
+
 		}).subscribe();
 
 		gateway.onDisconnect().block();
