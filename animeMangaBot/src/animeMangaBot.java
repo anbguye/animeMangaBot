@@ -3,17 +3,12 @@
  * The purpose of this bot is to keep track of manga & anime read/watched
  */
 
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import org.bson.Document;
+
 import discord4j.core.DiscordClient; // Import the DiscordClient class from the Discord4J library
 import discord4j.core.GatewayDiscordClient; // Import the GatewayDiscordClient class from the Discord4J library
 import discord4j.core.event.domain.message.MessageCreateEvent; // Import the MessageCreateEvent class from the Discord4J library
 import reactor.core.publisher.Mono; // Import the Mono class from the Reactor library
 import java.util.HashMap;
-import java.util.function.Consumer;
 
 /**
  * @author Anthony Nguyen

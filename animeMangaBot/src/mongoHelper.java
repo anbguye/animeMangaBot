@@ -24,7 +24,7 @@ public class mongoHelper {
 	private MongoCollection<Document> userCollection;
 
 	public mongoHelper() {
-		String connectionString = System.getenv("MONGODB_API_TOKEN");
+		connectionString = System.getenv("MONGODB_API_TOKEN");
 		mongoClient = MongoClients.create(connectionString);
 		animangaDB = mongoClient.getDatabase("animeMangaBotDB");
 		userCollection = animangaDB.getCollection("userData");
