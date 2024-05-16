@@ -6,9 +6,6 @@ import discord4j.core.DiscordClient; // Import the DiscordClient class from the 
 import discord4j.core.GatewayDiscordClient; // Import the GatewayDiscordClient class from the Discord4J library
 import discord4j.core.event.domain.message.MessageCreateEvent; // Import the MessageCreateEvent class from the Discord4J library
 import reactor.core.publisher.Mono; // Import the Mono class from the Reactor library
-
-import java.lang.reflect.Array;
-import java.util.Arrays;
 import java.util.HashMap;
 
 /**
