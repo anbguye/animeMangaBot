@@ -1,5 +1,5 @@
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class holds the lists of animanga along with all the methods associated with editing it
@@ -11,38 +11,19 @@ import java.util.List;
  */
 public class animangaList {
 
-	private List<animanga> myList;
+	private HashMap<String, Integer> myList;
 
 	public animangaList() {
-		myList = new ArrayList<animanga>();
+		myList = new HashMap<String, Integer>();
 	}
 
-	/**
-	 * @param title
-	 * @return animanga
-	 */
-	private animanga getTitle(String title) {
-		for (animanga animanga : myList)
-			if (animanga.getAnimanga().equalsIgnoreCase(title))
-				return animanga;
-		return null;
-	}
-
-	/**
-	 * Returns whether or not the given title is in the list
-	 * 
-	 * @param title
-	 * @return
-	 */
-	public boolean hasTitle(String title) {
-		if (getTitle(title) != null)
-			return true;
-		return false;
+	public boolean validTitle(String title) {
+		return myList.containsKey(title);
 	}
 
 	public int getChapter(String title) {
-		if (getTitle(title) != null)
-			return getTitle(title).getChapter();
+		if (validTitle(title))
+			return myList.get(title);
 		return 0;
 	}
 
@@ -52,7 +33,7 @@ public class animangaList {
 	 * @param title
 	 */
 	public void add(String title) {
-		myList.add(new animanga(title));
+		myList.put(title, 0);
 	}
 
 	/**
@@ -62,7 +43,7 @@ public class animangaList {
 	 * @param chapter
 	 */
 	public void add(String title, int chapter) {
-		myList.add(new animanga(title, chapter));
+		myList.put(title, chapter);
 	}
 
 	/**
@@ -71,8 +52,8 @@ public class animangaList {
 	 * @param title
 	 */
 	public void readChapter(String title) {
-		if (getTitle(title) != null)
-			getTitle(title).readChapter();
+		if (validTitle(title))
+			myList.put(title, myList.get(title) + 1);
 	}
 
 	/**
@@ -81,7 +62,7 @@ public class animangaList {
 	 * @param title
 	 */
 	public void remove(String title) {
-		myList.removeIf(val -> val.getAnimanga().equalsIgnoreCase(title));
+		myList.remove(title);
 	}
 
 	/**
@@ -91,8 +72,8 @@ public class animangaList {
 	 * @param chapter
 	 */
 	public void edit(String title, int chapter) {
-		if (getTitle(title) != null)
-			getTitle(title).setChapter(chapter);
+		if (validTitle(title))
+			myList.put(title, chapter);
 	}
 
 	/**
@@ -102,15 +83,17 @@ public class animangaList {
 	 */
 	public String list() {
 		String returned = "";
-		for (animanga animanga : myList)
-			returned += animanga.toString() + "\n";
+		for (Map.Entry<String, Integer> entry : myList.entrySet()) {
+			returned += entry.getKey() + " chapter/episode: " + entry.getValue() + "\n";
+		}
 		return returned;
 	}
 
+	/**
+	 * @return
+	 */
 	public boolean isEmpty() {
-		if (myList.isEmpty())
-			return true;
-		return false;
+		return myList.isEmpty();
 	}
 
 	@Override
