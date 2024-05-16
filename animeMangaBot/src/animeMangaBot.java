@@ -13,6 +13,7 @@ import discord4j.core.GatewayDiscordClient; // Import the GatewayDiscordClient c
 import discord4j.core.event.domain.message.MessageCreateEvent; // Import the MessageCreateEvent class from the Discord4J library
 import reactor.core.publisher.Mono; // Import the Mono class from the Reactor library
 import java.util.HashMap;
+import java.util.function.Consumer;
 
 /**
  * @author Anthony Nguyen
@@ -22,22 +23,33 @@ public class animeMangaBot {
 
 	public static void main(String args[]) {
 
+		// Tokens to connect to respective server
 		String token = System.getenv("MANGAANIME_API_TOKEN");
 		String connectionString = System.getenv("MONGODB_API_TOKEN");
-		DiscordClient client = DiscordClient.create(token); // Connects to discord API
 
-		// Create a new client and connect to the server
+		// HashMap holding userID and respective animanga lists.
+		HashMap<String, animangaList> database = new HashMap<String, animangaList>();
+
+		// Actually connects to discord
+		DiscordClient client = DiscordClient.create(token);
+		GatewayDiscordClient gateway = client.login().block();
+
+		// Create a new client and connect to the database server
 		try (MongoClient mongoClient = MongoClients.create(connectionString)) {
 
-			HashMap<String, animangaList> database = new HashMap<String, animangaList>();
-			GatewayDiscordClient gateway = client.login().block(); // Handles receiving messages, users joining
-																	// server, executing actions defined in code
-			// Send a ping to confirm a successful connection
+			// Connects to database and collections
 			MongoDatabase animangaDB = mongoClient.getDatabase("animeMangaBotDB");
 			MongoCollection<Document> userCollection = animangaDB.getCollection("userData");
 
+			// Takes the database information and puts it back into the database
+			userCollection.find().forEach((Consumer<? super Document>) document -> {
+				String userID = document.getString("userID");
+				database.put(userID, new animangaList((Document) document.get("animangaList")));
+			});
+
 			gateway.on(MessageCreateEvent.class).flatMap(event -> {
 
+				// Checks to see if the bot is reading its own message
 				if (event.getMessage().getAuthor().map(user -> !user.isBot()).orElse(false)) {
 					String userInput = event.getMessage().getContent();
 					String userID = event.getMessage().getAuthor().map(user -> user.getId().asString())
@@ -46,9 +58,13 @@ public class animeMangaBot {
 					String title = "";
 					int chapt = 0;
 
+					// Checks if user has used bot before, creates new list for user if not.
 					if (!database.containsKey(userID))
 						database.put(userID, new animangaList());
 
+					// Basically checks to see if the input has a chapter or not to know which add()
+					// to use, and goes to the catch section if it does have a chapter number
+					// associated with it.
 					if (input.length >= 2) {
 						try {
 							Integer.parseInt(input[input.length - 1]);
@@ -61,16 +77,33 @@ public class animeMangaBot {
 								title += input[i] + " ";
 							}
 						}
+
+						// Checks to see if titles such as "Mob Psycho 100" which has numbers at the end
+						// are in the list, and makes sure its a title if so.
 						if (database.get(userID).validTitle(title.trim() + " " + input[input.length - 1]))
 							title = title.trim() + " " + input[input.length - 1];
 					}
 
+					// Makes sure the title and chapter is correctly listed for accurate switch
+					// casing since .split isnt perfect.
 					final int finalChapt = chapt;
 					final String finalTitle = title.trim();
 
+					// Checks to see if userID is already in the userID collections. If in database,
+					// update it; Otherwise, add it to the database.
+					if (userCollection.find(new Document("userID", userID)).first() != null)
+						userCollection.replaceOne(new Document("userID", userID), new Document("userID", userID)
+								.append("animangaList", database.get(userID).toDocument()));
+					else
+						userCollection.insertOne(new Document("userID", userID).append("animangaList",
+								database.get(userID).toDocument()));
+
+					// Checks to see which command user inputs, sends it to switch case accordingly.
 					switch (input[0]) {
 					case "!add":
 						try {
+							// If it has a chapter, intentionally makes NumberFormatException to just add
+							// title, otherwise add both title and chapter #.
 							if (!database.get(userID).validTitle(finalTitle)) {
 								database.get(userID).add(finalTitle, chapt);
 								return event.getMessage().getChannel().flatMap(
@@ -88,8 +121,9 @@ public class animeMangaBot {
 									.flatMap(channel -> channel.createMessage("Title is already on your list."));
 						}
 					case "!read":
-						if (database.get(userID).validTitle(title)) {
-							database.get(userID).readChapter(title);
+						// Basically adds +1 to the chapter counter of given title.
+						if (database.get(userID).validTitle(finalTitle)) {
+							database.get(userID).readChapter(finalTitle);
 							return event.getMessage().getChannel()
 									.flatMap(channel -> channel.createMessage("Now read/watched up to "
 											+ database.get(userID).getChapter(finalTitle) + " in " + finalTitle));
@@ -97,6 +131,7 @@ public class animeMangaBot {
 						return event.getMessage().getChannel()
 								.flatMap(channel -> channel.createMessage("Title is not on your list."));
 					case "!remove":
+						// Removes title from given user's list based off their input.
 						if (database.get(userID).validTitle(finalTitle)) {
 							database.get(userID).remove(finalTitle);
 							return event.getMessage().getChannel().flatMap(
@@ -105,6 +140,7 @@ public class animeMangaBot {
 						return event.getMessage().getChannel()
 								.flatMap(channel -> channel.createMessage("Title is not on your list."));
 					case "!edit":
+						// Edit title's chapter based off user input.
 						if (database.get(userID).validTitle(finalTitle)) {
 							database.get(userID).edit(finalTitle, finalChapt);
 							return event.getMessage().getChannel().flatMap(channel -> channel
@@ -113,12 +149,14 @@ public class animeMangaBot {
 						return event.getMessage().getChannel()
 								.flatMap(channel -> channel.createMessage("Title is not on your list."));
 					case "!list":
+						// Lists user title list along with chapter #.
 						if (!database.get(userID).isEmpty())
 							return event.getMessage().getChannel()
 									.flatMap(channel -> channel.createMessage(database.get(userID).list()));
 						return event.getMessage().getChannel()
 								.flatMap(channel -> channel.createMessage("List is empty."));
 					case "!help":
+						// Lists commands currently available.
 						return event.getMessage().getChannel()
 								.flatMap(channel -> channel.createMessage("!add - adds animanga to your list\n"
 										+ "!read - adds +1 to your animanga chepisode counter\n"
@@ -126,20 +164,22 @@ public class animeMangaBot {
 										+ "!edit - episodes currnet chepisode read/watched\n" + ""
 										+ "!list - lists your list"));
 					default:
+						// If user input fails to match anything above, defaults to telling them to use
+						// !help.
 						if (userInput.startsWith("!"))
 							return event.getMessage().getChannel()
 									.flatMap(channel -> channel.createMessage("Invalid command, please use !help"));
 					}
 
-					Document userData = new Document("userID", userID).append("animangaList", database.get(userID));
-					userCollection.insertOne(userData);
-
 				}
 
+				// Move on to next step.
 				return Mono.empty();
 
+				// Waits for next message.
 			}).subscribe();
 
+			// Disconnects from discord server.
 			gateway.onDisconnect().block();
 
 		} catch (MongoException e) {

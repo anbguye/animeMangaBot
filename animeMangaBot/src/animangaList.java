@@ -1,8 +1,12 @@
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import org.bson.Document;
 
 /**
- * This class holds the lists of animanga along with all the methods associated with editing it
+ * This class holds a HashMap containing the animanga 
+ * and chapter associated with every userID along with 
+ * all the methods associated with editing it.
  */
 
 /**
@@ -15,6 +19,13 @@ public class animangaList {
 
 	public animangaList() {
 		myList = new HashMap<String, Integer>();
+	}
+
+	public animangaList(Document document) {
+		myList = new HashMap<String, Integer>();
+		for (Entry<String, Object> entry : document.entrySet()) {
+			myList.put(entry.getKey(), (Integer) entry.getValue());
+		}
 	}
 
 	public boolean validTitle(String title) {
@@ -94,6 +105,14 @@ public class animangaList {
 	 */
 	public boolean isEmpty() {
 		return myList.isEmpty();
+	}
+
+	public Document toDocument() {
+		Document returned = new Document();
+		for (Map.Entry<String, Integer> entry : myList.entrySet()) {
+			returned.append(entry.getKey(), entry.getValue());
+		}
+		return returned;
 	}
 
 	@Override
