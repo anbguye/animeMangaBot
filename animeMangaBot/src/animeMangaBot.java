@@ -68,9 +68,6 @@ public class animeMangaBot {
 					final int finalChapt = chapt;
 					final String finalTitle = title.trim();
 
-					System.out.println(finalChapt);
-					System.out.println(finalTitle);
-
 					switch (input[0]) {
 					case "!add":
 						try {
