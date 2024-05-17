@@ -3,7 +3,6 @@
  * The purpose of this bot is to keep track of manga & anime read/watched
  */
 
-
 import discord4j.core.DiscordClient; // Import the DiscordClient class from the Discord4J library
 import discord4j.core.GatewayDiscordClient; // Import the GatewayDiscordClient class from the Discord4J library
 import discord4j.core.event.domain.message.MessageCreateEvent; // Import the MessageCreateEvent class from the Discord4J library
@@ -141,7 +140,7 @@ public class animeMangaBot {
 							.flatMap(channel -> channel.createMessage("!add - adds animanga to your list\n"
 									+ "!read - adds +1 to your animanga chepisode counter\n"
 									+ "!remove - removes animanga from your list\n"
-									+ "!edit - episodes currnet chepisode read/watched\n" + ""
+									+ "!edit - edits current chepisode read/watched\n" + ""
 									+ "!list - lists your list"));
 				default:
 					// If user input fails to match anything above, defaults to telling them to use
